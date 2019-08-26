@@ -5,11 +5,17 @@ OUTPUT_DIRECTORY := _build
 # Only this directory contains bins that should be uploaded to github for end-user-use
 RELEASE_DIRECTORY := _release
 
-SDK_ROOT := ./nRF5_SDK_12.3.0
+# SDK_ROOT := ./nRF5_SDK_12.3.0
+SDK_ROOT := /home/kevinh/development/ebike/nrf5-sdk-10
 PROJ_DIR := .
+
+TEMPLATE_PATH := $(SDK_ROOT)/components/toolchain/gcc/
 
 $(OUTPUT_DIRECTORY)/nrf51822_sw102.out: \
   LINKER_SCRIPT  := gcc_nrf51.ld
+
+# was 130
+SOFTDEVICE_VERSION = 110
 
 # dev platform specific.
 # OPENOCD_PATH := E:/nrf5/Toolchain/OpenOCD/0.10.0-12-20190422-2015/bin
@@ -25,12 +31,11 @@ OPENOCD := '$(OPENOCD_PATH)/$(OPENOCD_BIN)' -f $(OPENOCD_PATH)/../scripts/interf
 COMMON_DIR := ../common
 
 # Source files common to all targets
-SRC_FILES += \
+#   $(PROJ_DIR)/src/sw102/ble_services.c   $(PROJ_DIR)/src/sw102/adc.c
+C_SOURCE_FILES += \
   $(PROJ_DIR)/src/sw102/main.c \
   $(PROJ_DIR)/src/sw102/lcd.c \
   $(PROJ_DIR)/src/sw102/button.c \
-  $(PROJ_DIR)/src/sw102/ble_services.c \
-  $(PROJ_DIR)/src/sw102/adc.c \
   $(PROJ_DIR)/src/sw102/eeprom_hw.c \
   $(PROJ_DIR)/src/sw102/rtc.c \
   $(COMMON_DIR)/src/ugui.c \
@@ -82,31 +87,30 @@ SRC_FILES += \
   $(SDK_ROOT)/components/ble/peer_manager/security_dispatcher.c \
   $(SDK_ROOT)/components/ble/peer_manager/security_manager.c \
   $(SDK_ROOT)/components/toolchain/gcc/gcc_startup_nrf51.S \
-  $(SDK_ROOT)/components/toolchain/system_nrf51.c \
   $(SDK_ROOT)/components/softdevice/common/softdevice_handler/softdevice_handler.c \
+
+ASM_SOURCE_FILES =   $(SDK_ROOT)/components/toolchain/system_nrf51.c
 
 # Include folders common to all targets
 INC_FOLDERS += \
   $(PROJ_DIR)/include \
   $(COMMON_DIR)/include \
   $(SDK_ROOT)/components \
-  $(SDK_ROOT)/components/boards \
   $(SDK_ROOT)/components/device \
   $(SDK_ROOT)/components/softdevice/common/softdevice_handler \
-  $(SDK_ROOT)/components/softdevice/s130/headers \
-  $(SDK_ROOT)/components/softdevice/s130/headers/nrf51 \
-  $(SDK_ROOT)/components/drivers_nrf/adc \
+  $(SDK_ROOT)/components/softdevice/s$(SOFTDEVICE_VERSION)/headers \
   $(SDK_ROOT)/components/drivers_nrf/ble_flash \
   $(SDK_ROOT)/components/drivers_nrf/clock \
   $(SDK_ROOT)/components/drivers_nrf/common \
+  $(SDK_ROOT)/components/drivers_nrf/config \
   $(SDK_ROOT)/components/drivers_nrf/delay \
   $(SDK_ROOT)/components/drivers_nrf/gpiote \
   $(SDK_ROOT)/components/drivers_nrf/hal \
   $(SDK_ROOT)/components/drivers_nrf/lpcomp \
   $(SDK_ROOT)/components/drivers_nrf/nrf_soc_nosd \
-  $(SDK_ROOT)/components/drivers_nrf/pdm \
-  $(SDK_ROOT)/components/drivers_nrf/power \
   $(SDK_ROOT)/components/drivers_nrf/ppi \
+  $(SDK_ROOT)/components/drivers_nrf/pstorage \
+  $(SDK_ROOT)/components/drivers_nrf/pstorage/config \
   $(SDK_ROOT)/components/drivers_nrf/qdec \
   $(SDK_ROOT)/components/drivers_nrf/radio_config \
   $(SDK_ROOT)/components/drivers_nrf/rng \
@@ -117,7 +121,6 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/drivers_nrf/swi \
   $(SDK_ROOT)/components/drivers_nrf/timer \
   $(SDK_ROOT)/components/drivers_nrf/twi_master \
-  $(SDK_ROOT)/components/drivers_nrf/twis_slave \
   $(SDK_ROOT)/components/drivers_nrf/uart \
   $(SDK_ROOT)/components/drivers_nrf/wdt \
   $(SDK_ROOT)/components/ble/ble_advertising \
@@ -137,7 +140,6 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/ble/ble_services/ble_ias \
   $(SDK_ROOT)/components/ble/ble_services/ble_ias_c \
   $(SDK_ROOT)/components/ble/ble_services/ble_lbs \
-  $(SDK_ROOT)/components/ble/ble_services/ble_lbs_c \
   $(SDK_ROOT)/components/ble/ble_services/ble_lls \
   $(SDK_ROOT)/components/ble/ble_services/ble_nus \
   $(SDK_ROOT)/components/ble/ble_services/ble_nus_c \
@@ -147,42 +149,28 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/ble/ble_dtm \
   $(SDK_ROOT)/components/ble/ble_racp \
   $(SDK_ROOT)/components/ble/common \
-  $(SDK_ROOT)/components/ble/nrf_ble_qwr \
   $(SDK_ROOT)/components/ble/peer_manager \
-  $(SDK_ROOT)/components/libraries/bootloader \
-  $(SDK_ROOT)/components/libraries/bootloader/ble_dfu \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu \
-  $(SDK_ROOT)/components/libraries/bsp \
   $(SDK_ROOT)/components/libraries/button \
   $(SDK_ROOT)/components/libraries/crc16 \
-  $(SDK_ROOT)/components/libraries/crc32 \
-  $(SDK_ROOT)/components/libraries/crypto \
-  $(SDK_ROOT)/components/libraries/csense \
-  $(SDK_ROOT)/components/libraries/csense_drv \
   $(SDK_ROOT)/components/libraries/experimental_section_vars \
   $(SDK_ROOT)/components/libraries/fds \
   $(SDK_ROOT)/components/libraries/fifo \
   $(SDK_ROOT)/components/libraries/fstorage \
   $(SDK_ROOT)/components/libraries/gpiote \
-  $(SDK_ROOT)/components/libraries/hardfault \
   $(SDK_ROOT)/components/libraries/hci \
   $(SDK_ROOT)/components/libraries/led_softblink \
-  $(SDK_ROOT)/components/libraries/log \
-  $(SDK_ROOT)/components/libraries/log/src \
   $(SDK_ROOT)/components/libraries/low_power_pwm \
   $(SDK_ROOT)/components/libraries/mem_manager \
   $(SDK_ROOT)/components/libraries/pwm \
-  $(SDK_ROOT)/components/libraries/pwr_mgmt \
-  $(SDK_ROOT)/components/libraries/queue \
   $(SDK_ROOT)/components/libraries/scheduler \
   $(SDK_ROOT)/components/libraries/sensorsim \
   $(SDK_ROOT)/components/libraries/slip \
+  $(SDK_ROOT)/components/libraries/trace \
   $(SDK_ROOT)/components/libraries/timer \
   $(SDK_ROOT)/components/libraries/twi \
   $(SDK_ROOT)/components/libraries/uart \
   $(SDK_ROOT)/components/libraries/util \
   $(SDK_ROOT)/components/toolchain \
-  $(SDK_ROOT)/components/toolchain/cmsis/include \
   $(SDK_ROOT)/components/toolchain/gcc \
   
 # Libraries common to all targets
@@ -190,18 +178,23 @@ LIB_FILES += \
 
 include $(COMMON_DIR)/Makefile.common
 
+# include $(SDK_ROOT)/components/toolchain/gcc/Makefile.posix
+GNU_INSTALL_ROOT := /usr/local/gcc-arm-none-eabi-4_9-2015q3
+GNU_VERSION := 4.9.3
+GNU_PREFIX := arm-none-eabi
+
 # Optimization flags release (note - we use -funwind-tables so our app fault handler can reverse engineer the PC of the caller when unsupplied)
 OPT = -Os -g3 
 # Optimization flags debug (important to get line numbers for faults - warning this adds about 40KB to flash size!)
 # OPT = -O0 -g3 -DDEBUG_NRF -DDEBUG 
 
 # C flags common to all targets
-CFLAGS += $(OPT)
+CFLAGS += $(OPT) -std=c99
 CFLAGS += -DBOARD_CUSTOM -DSW102
 CFLAGS += -DSOFTDEVICE_PRESENT
 CFLAGS += -DNRF51
 CFLAGS += -DNRF_DFU_SETTINGS_VERSION=1
-CFLAGS += -DS130
+CFLAGS += -DS$(SOFTDEVICE_VERSION)
 CFLAGS += -DBLE_STACK_SUPPORT_REQD
 CFLAGS += -DSWI_DISABLE0
 CFLAGS += -DNRF51822
@@ -223,7 +216,7 @@ ASMFLAGS += -DBOARD_CUSTOM
 ASMFLAGS += -DSOFTDEVICE_PRESENT
 ASMFLAGS += -DNRF51
 ASMFLAGS += -DNRF_DFU_SETTINGS_VERSION=1
-ASMFLAGS += -DS130
+ASMFLAGS += -DS$(SOFTDEVICE_VERSION)
 ASMFLAGS += -DBLE_STACK_SUPPORT_REQD
 ASMFLAGS += -DSWI_DISABLE0
 ASMFLAGS += -DNRF51822
@@ -238,7 +231,8 @@ LDFLAGS += -Wl,--gc-sections
 LDFLAGS += --specs=nano.specs -lc -lnosys
 LDFLAGS += -Xlinker -Map=$(OUTPUT_DIRECTORY)/nrf51822_sw102.map
 
-SOFT_DEVICE = $(SDK_ROOT)/components/softdevice/s130/hex/s130_nrf51_2.0.1_softdevice.hex
+SOFT_DEVICE = $(SDK_ROOT)/components/softdevice/s$(SOFTDEVICE_VERSION)/hex/s110_nrf51_8.0.0_softdevice.hex
+# SOFT_DEVICE = $(SDK_ROOT)/components/softdevice/s130/hex/s130_nrf51_2.0.1_softdevice.hex
 BOOTLOADER_HEX = ../../../SW102_LCD_Bluetooth-bootloader/_build/sw102_bootloader.hex
 KEYFILE := ../../../SW102_LCD_Bluetooth-bootloader/private.key
 
@@ -252,11 +246,7 @@ help:
 	@echo following targets are available:
 	@echo 	nrf51822_sw102
 
-TEMPLATE_PATH := $(SDK_ROOT)/components/toolchain/gcc
-
-include $(TEMPLATE_PATH)/Makefile.common
-
-$(foreach target, $(TARGETS), $(call define_target, $(target)))
+# $(foreach target, $(TARGETS), $(call define_target, $(target)))
 
 # Flash the program
 flash_program: $(OUTPUT_DIRECTORY)/nrf51822_sw102.hex
@@ -269,11 +259,11 @@ openocd:
 
 # Flash softdevice
 flash_softdevice:
-	@echo Flashing: s130_nrf51_2.0.1_softdevice.hex
-	$(OPENOCD) -c "init; reset init; nrf51 mass_erase; flash write_image $(SOFT_DEVICE); verify_image $(SDK_ROOT)/components/softdevice/s130/hex/s130_nrf51_2.0.1_softdevice.hex; reset halt; resume; shutdown"
+	@echo Flashing: $(SOFT_DEVICE)
+	$(OPENOCD) -c "init; reset init; nrf51 mass_erase; flash write_image $(SOFT_DEVICE); verify_image $(SOFT_DEVICE); reset halt; resume; shutdown"
     
 # Erase Flash
-erase:
+erase_flash:
 	@echo Erasing all
 	$(OPENOCD) -c "init; reset init; nrf51 mass_erase; shutdown"
 
@@ -281,6 +271,12 @@ erase:
 generate_dfu_package: $(OUTPUT_DIRECTORY)/nrf51822_sw102.hex
 	mkdir -p $(RELEASE_DIRECTORY)
 	$(NRFUTIL) pkg generate --application ./$(OUTPUT_DIRECTORY)/nrf51822_sw102.hex --key-file $(KEYFILE) --application-version $(VERSION_NUM) --hw-version 51 --sd-req 0x87 $(RELEASE_DIRECTORY)/sw102-otaupdate-$(VERSION_STRING).zip
+
+# Generate a DFU package but for a SDK 9 bootloader & SD 110 v8.1 soft device (i.e. the devices from @eyebyesickle)
+generate_easy: $(OUTPUT_DIRECTORY)/nrf51822_sw102.hex
+	mkdir -p $(RELEASE_DIRECTORY)
+	/usr/local/bin/nrfutil dfu genpkg --application ./$(OUTPUT_DIRECTORY)/nrf51822_sw102.hex --sd-req 100 $(RELEASE_DIRECTORY)/sw102-easy-$(VERSION_STRING).zip
+	# /usr/local/bin/nrfutil dfu genpkg --bootloader ../SW102_LCD_Bluetooth-bootloader/_build/sw102_bootloader.hex --sd-req 100 --softdevice $(SDK_ROOT)/components/softdevice/s130/hex/s130_nrf51_2.0.1_softdevice.hex $(RELEASE_DIRECTORY)/sw102-firsttime-$(VERSION_STRING).zip
 
 # Generate a prebuilt bin file with bootloader apploand and valid app crc
 # per appendix 1 here: https://devzone.nordicsemi.com/nordic/nordic-blog/b/blog/posts/getting-started-with-nordics-secure-dfu-bootloader
@@ -298,4 +294,77 @@ SDK_CONFIG_FILE := $(PROJ_DIR)/include/sdk_config.h
 CMSIS_CONFIG_TOOL := $(SDK_ROOT)/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar
 sdk_config:
 	java -jar $(CMSIS_CONFIG_TOOL) $(SDK_CONFIG_FILE)
+
+INC_PATHS := $(foreach dir,$(INC_FOLDERS), -I$(abspath $(dir)))
+
+MK := mkdir
+RM := rm -rf
+
+#echo suspend
+ifeq ("$(VERBOSE)","1")
+NO_ECHO := 
+else
+NO_ECHO := @
+endif
+
+# Toolchain commands
+CC              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-gcc'
+AS              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-as'
+AR              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-ar' -r
+LD              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-ld'
+NM              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-nm'
+OBJDUMP         := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objdump'
+OBJCOPY         := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objcopy'
+SIZE            := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-size'
+
+#function for removing duplicates in a list
+remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-out $(firstword $1),$1))))
+
+OBJECT_DIRECTORY = _build
+LISTING_DIRECTORY = $(OBJECT_DIRECTORY)
+OUTPUT_BINARY_DIRECTORY = $(OBJECT_DIRECTORY)
+
+# Sorting removes duplicates
+BUILD_DIRECTORIES := $(sort $(OBJECT_DIRECTORY) $(OUTPUT_BINARY_DIRECTORY) $(LISTING_DIRECTORY) )
+
+C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
+C_PATHS = $(call remduplicates, $(dir $(C_SOURCE_FILES) ) )
+C_OBJECTS = $(addprefix $(OBJECT_DIRECTORY)/, $(C_SOURCE_FILE_NAMES:.c=.o) )
+
+ASM_SOURCE_FILE_NAMES = $(notdir $(ASM_SOURCE_FILES))
+ASM_PATHS = $(call remduplicates, $(dir $(ASM_SOURCE_FILES) ))
+ASM_OBJECTS = $(addprefix $(OBJECT_DIRECTORY)/, $(ASM_SOURCE_FILE_NAMES:.s=.o) )
+
+vpath %.c $(C_PATHS)
+vpath %.s $(ASM_PATHS)
+
+OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
+
+nrf51822_sw102: OUTPUT_FILENAME := nrf51822_sw102
+nrf51822_sw102: LINKER_SCRIPT=gcc_nrf51.ld
+nrf51822_sw102: $(BUILD_DIRECTORIES) $(OBJECTS)
+	@echo Linking target: $(OUTPUT_FILENAME).out
+	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
+	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e finalize
+	
+## Create build directories
+$(BUILD_DIRECTORIES):
+	echo $(MAKEFILE_NAME)
+	$(MK) $@
+
+# Create objects from C SRC files
+$(OBJECT_DIRECTORY)/%.o: %.c
+	@echo Compiling file: $(notdir $<)
+	$(NO_ECHO)$(CC) $(CFLAGS) $(INC_PATHS) -c -o $@ $<
+
+# Assemble files
+$(OBJECT_DIRECTORY)/%.o: %.s
+	@echo Compiling file: $(notdir $<)
+	$(NO_ECHO)$(CC) $(ASMFLAGS) $(INC_PATHS) -c -o $@ $<
+
+# Link
+$(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out: $(BUILD_DIRECTORIES) $(OBJECTS)
+	@echo Linking target: $(OUTPUT_FILENAME).out
+	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
+
 	

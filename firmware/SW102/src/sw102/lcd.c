@@ -17,6 +17,7 @@
 #include "common.h"
 #include "nrf_delay.h"
 #include "nrf_drv_spi.h"
+#include "nrf_gpio.h"
 #include "ugui.h"
 
 
@@ -235,7 +236,7 @@ void lcd_refresh(void)
  */
 static void spi_init(void)
 {
-  nrf_drv_spi_config_t spi_config = NRF_DRV_SPI_DEFAULT_CONFIG;
+  nrf_drv_spi_config_t spi_config = NRF_DRV_SPI_DEFAULT_CONFIG(0);
   spi_config.ss_pin = LCD_CHIP_SELECT__PIN;
   spi_config.mosi_pin = LCD_DATA__PIN;
   spi_config.sck_pin = LCD_CLOCK__PIN;

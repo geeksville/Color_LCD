@@ -8,8 +8,12 @@
 #include "state.h"
 
 #ifdef SW102
+
+#ifdef HAS_HARDFAULT
 #include "hardfault.h"
-#include "nrf_nvic.h"
+#endif
+
+#include "nrf_soc.h"
 #include "nrf_delay.h"
 #else
 
@@ -92,7 +96,7 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
   }
 
   case FAULT_HARDFAULT:
-#ifdef SW102
+#ifdef HAS_HARDFAULT
     if(!info)
       fieldPrintf(&infoCode, "hf overflow");
     else {
@@ -128,8 +132,8 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
   while (1) {
     if(buttons_get_onoff_click_event())
 #ifdef SW102
-        nrf_delay_ms(20);
       sd_nvic_SystemReset();
+    nrf_delay_ms(20);
 #else
       ; // FIXME
 #endif

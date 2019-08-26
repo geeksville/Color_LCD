@@ -1,7 +1,23 @@
 #ifndef INCLUDE_DEFINITIONS_H_
 #define INCLUDE_DEFINITIONS_H_
 
-#include "boards.h"
+// #include "boards.h"
+#include "custom_board.h"
+#include "sdk_config.h"
+#include "app_error.h"
+#include "app_util_platform.h"
+
+// #include "nrf_drv_config.h"
+#if (SPI0_ENABLED == 1)
+#define SPI0_USE_EASY_DMA 0
+
+#define SPI0_CONFIG_SCK_PIN         2
+#define SPI0_CONFIG_MOSI_PIN        3
+#define SPI0_CONFIG_MISO_PIN        4
+#define SPI0_CONFIG_IRQ_PRIORITY    APP_IRQ_PRIORITY_LOW
+
+#define SPI0_INSTANCE_INDEX 0
+#endif
 
 /*  Peripheral usage by SoftDevice 130 */
 /* Blocked

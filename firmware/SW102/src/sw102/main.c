@@ -20,9 +20,7 @@
 #include "configscreen.h"
 #include "nrf_soc.h"
 #include "adc.h"
-#include "hardfault.h"
 #include "fault.h"
-#include "nrf_nvic.h"
 #include "rtc.h"
 
 
