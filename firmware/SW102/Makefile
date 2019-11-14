@@ -8,8 +8,24 @@ RELEASE_DIRECTORY := _release
 SDK_ROOT := ./nRF5_SDK_12.3.0
 PROJ_DIR := .
 
-$(OUTPUT_DIRECTORY)/nrf51822_sw102.out: \
-  LINKER_SCRIPT  := gcc_nrf51.ld
+# NOSOLDER = true
+
+ifdef NOSOLDER
+SOFTDEVICE_VERSION := 110
+
+# For this hack we pretend to build/link against SD130 (so all our code compiles), but we just don't call
+# any soft device functions at runtime.
+FAKEDEVICE_VERSION := 130
+SOFTDEVICE_HEX := s110_nrf51_8.0.0_softdevice.hex
+else
+SOFTDEVICE_VERSION := 130
+FAKEDEVICE_VERSION := $(SOFTDEVICE_VERSION)
+SOFTDEVICE_HEX := s130_nrf51_2.0.1_softdevice.hex
+endif
+
+# $(OUTPUT_DIRECTORY)/nrf51822_sw102.out: \
+
+LINKER_SCRIPT  := gcc_nrf51-sd$(SOFTDEVICE_VERSION).ld
 
 PLATFORM := $(if $(filter Windows%,$(OS)),windows,posix)
 
@@ -103,8 +119,8 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/boards \
   $(SDK_ROOT)/components/device \
   $(SDK_ROOT)/components/softdevice/common/softdevice_handler \
-  $(SDK_ROOT)/components/softdevice/s130/headers \
-  $(SDK_ROOT)/components/softdevice/s130/headers/nrf51 \
+  $(SDK_ROOT)/components/softdevice/s$(FAKEDEVICE_VERSION)/headers \
+  $(SDK_ROOT)/components/softdevice/s$(FAKEDEVICE_VERSION)/headers/nrf51 \
   $(SDK_ROOT)/components/drivers_nrf/adc \
   $(SDK_ROOT)/components/drivers_nrf/ble_flash \
   $(SDK_ROOT)/components/drivers_nrf/clock \
@@ -211,7 +227,7 @@ CFLAGS += -DBOARD_CUSTOM -DSW102
 CFLAGS += -DSOFTDEVICE_PRESENT
 CFLAGS += -DNRF51
 CFLAGS += -DNRF_DFU_SETTINGS_VERSION=1
-CFLAGS += -DS130
+CFLAGS += -DS$(SOFTDEVICE_VERSION)
 CFLAGS += -DBLE_STACK_SUPPORT_REQD
 CFLAGS += -DSWI_DISABLE0
 CFLAGS += -DNRF51822
@@ -233,7 +249,7 @@ ASMFLAGS += -DBOARD_CUSTOM
 ASMFLAGS += -DSOFTDEVICE_PRESENT
 ASMFLAGS += -DNRF51
 ASMFLAGS += -DNRF_DFU_SETTINGS_VERSION=1
-ASMFLAGS += -DS130
+ASMFLAGS += -DS$(SOFTDEVICE_VERSION)
 ASMFLAGS += -DBLE_STACK_SUPPORT_REQD
 ASMFLAGS += -DSWI_DISABLE0
 ASMFLAGS += -DNRF51822
@@ -248,7 +264,7 @@ LDFLAGS += -Wl,--gc-sections
 LDFLAGS += --specs=nano.specs -lc -lnosys
 LDFLAGS += -Xlinker -Map=$(OUTPUT_DIRECTORY)/nrf51822_sw102.map
 
-SOFT_DEVICE = $(SDK_ROOT)/components/softdevice/s130/hex/s130_nrf51_2.0.1_softdevice.hex
+SOFT_DEVICE = $(SDK_ROOT)/components/softdevice/s$(SOFTDEVICE_VERSION)/hex/$(SOFTDEVICE_HEX)
 # BOOTLOADER_HEX = ../../../SW102_LCD_Bluetooth-bootloader/_build/sw102_bootloader.hex
 BOOTLOADER_HEX = prebuilt/sw102_bootloader.hex
 # KEYFILE := ../../../SW102_LCD_Bluetooth-bootloader/private.key
@@ -289,7 +305,7 @@ openocd-shell:
 
 # Flash softdevice
 flash_softdevice:
-	@echo Flashing: s130_nrf51_2.0.1_softdevice.hex
+	@echo Flashing: $(SOFTDEVICE_HEX)
 	$(OPENOCD) -c "init; reset init; nrf51 mass_erase; flash write_image $(SOFT_DEVICE); verify_image $(SOFT_DEVICE); reset halt; resume; shutdown"
 
 # Erase Flash
@@ -303,6 +319,12 @@ erase:
 generate_dfu_package: $(OUTPUT_DIRECTORY)/nrf51822_sw102.hex
 	mkdir -p $(RELEASE_DIRECTORY)
 	$(NRFUTIL) pkg generate --application ./$(OUTPUT_DIRECTORY)/nrf51822_sw102.hex --key-file $(KEYFILE) --application-version $(VERSION_NUM) --hw-version 51 --sd-req 0x87 $(RELEASE_DIRECTORY)/sw102-otaupdate-$(VERSION_STRING).zip
+
+# Generate a DFU package but for a SDK 9 bootloader & SD 110 v8.1 soft device (i.e. the devices from @eyebyesickle)
+generate_nosolder: $(OUTPUT_DIRECTORY)/nrf51822_sw102.hex
+	mkdir -p $(RELEASE_DIRECTORY)
+	/usr/local/bin/nrfutil dfu genpkg --application ./$(OUTPUT_DIRECTORY)/nrf51822_sw102.hex --sd-req 100 $(RELEASE_DIRECTORY)/sw102-nosolder-$(VERSION_STRING).zip
+	# /usr/local/bin/nrfutil dfu genpkg --bootloader ../SW102_LCD_Bluetooth-bootloader/_build/sw102_bootloader.hex --sd-req 100 --softdevice $(SDK_ROOT)/components/softdevice/s130/hex/s130_nrf51_2.0.1_softdevice.hex $(RELEASE_DIRECTORY)/sw102-firsttime-$(VERSION_STRING).zip
 
 # Generate a prebuilt bin file with bootloader apploand and valid app crc
 # per appendix 1 here: https://devzone.nordicsemi.com/nordic/nordic-blog/b/blog/posts/getting-started-with-nordics-secure-dfu-bootloader
