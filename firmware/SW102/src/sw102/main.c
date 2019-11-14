@@ -50,6 +50,7 @@ volatile uint32_t gui_ticks;
 
 // assume we should until we init_softdevice()
 bool useSoftDevice = true;
+bool noSolderHack = false; // if true we are running against an old SD100 build and we can't call soft device
 
 /* Function prototype */
 static void gpio_init(void);
@@ -149,6 +150,18 @@ void init_softdevice() {
 
   if(*softdeviceaddr == 0xffffffff) // definitely no soft device
     useSoftDevice = false;
+
+   // per https://devzone.nordicsemi.com/f/nordic-q-a/1171/how-do-i-access-softdevice-version-string#post-id-3693
+   // check to see if the magic 16 bit value in 0x300c matches what we expect for a SD130 version
+   // soft device.  If not, we are running our NOSOLDER hack.
+  uint32_t sdVersion = * (uint32_t *) 0x300c;
+
+  // upper 16 bits better be high S130 v2.0.1
+  uint32_t expectedVersion = 0xffff0087;
+  if(sdVersion != expectedVersion) {
+    useSoftDevice = false;
+    noSolderHack = true;
+  }
 
 #if 0
   uint32_t *bootloaderaddr = (uint32_t *) 0x10001014;
