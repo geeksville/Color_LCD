@@ -8,7 +8,7 @@ RELEASE_DIRECTORY := _release
 SDK_ROOT := ./nRF5_SDK_12.3.0
 PROJ_DIR := .
 
-# NOSOLDER = true
+NOSOLDER = true
 
 ifdef NOSOLDER
 SOFTDEVICE_VERSION := 110
@@ -16,11 +16,14 @@ SOFTDEVICE_VERSION := 110
 # For this hack we pretend to build/link against SD130 (so all our code compiles), but we just don't call
 # any soft device functions at runtime.
 FAKEDEVICE_VERSION := 130
-SOFTDEVICE_HEX := s110_nrf51_8.0.0_softdevice.hex
+SOFTDEVICE_HEX := s110_softdevice.hex
+SOFT_DEVICE = $(SOFTDEVICE_HEX)
 else
 SOFTDEVICE_VERSION := 130
 FAKEDEVICE_VERSION := $(SOFTDEVICE_VERSION)
 SOFTDEVICE_HEX := s130_nrf51_2.0.1_softdevice.hex
+SOFT_DEVICE = $(SDK_ROOT)/components/softdevice/s$(SOFTDEVICE_VERSION)/hex/$(SOFTDEVICE_HEX)
+
 endif
 
 # $(OUTPUT_DIRECTORY)/nrf51822_sw102.out: \
@@ -264,7 +267,6 @@ LDFLAGS += -Wl,--gc-sections
 LDFLAGS += --specs=nano.specs -lc -lnosys
 LDFLAGS += -Xlinker -Map=$(OUTPUT_DIRECTORY)/nrf51822_sw102.map
 
-SOFT_DEVICE = $(SDK_ROOT)/components/softdevice/s$(SOFTDEVICE_VERSION)/hex/$(SOFTDEVICE_HEX)
 # BOOTLOADER_HEX = ../../../SW102_LCD_Bluetooth-bootloader/_build/sw102_bootloader.hex
 BOOTLOADER_HEX = prebuilt/sw102_bootloader.hex
 # KEYFILE := ../../../SW102_LCD_Bluetooth-bootloader/private.key
