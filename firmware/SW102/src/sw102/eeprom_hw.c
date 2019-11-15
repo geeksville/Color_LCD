@@ -48,8 +48,9 @@ static void fds_evt_handler(fds_evt_t const *const evt)
 #define FILE_ID     0x1001
 #define REC_KEY     0x2002
 
+// read using the soft device
 // returns true if our preferences were found
-bool flash_read_words(void *dest, uint16_t length_words)
+static bool flash_read_words_sd(void *dest, uint16_t length_words)
 {
   fds_flash_record_t flash_record;
   fds_record_desc_t record_desc;
@@ -83,6 +84,11 @@ bool flash_read_words(void *dest, uint16_t length_words)
   return did_read;
 }
 
+bool flash_read_words(void *dest, uint16_t length_words)
+{
+  return flash_read_words_sd(dest, length_words);
+}
+
 static bool wait_gc()
 {
   if(!useSoftDevice)
@@ -100,7 +106,8 @@ static bool wait_gc()
 }
 
 
-bool flash_write_words(const void *value, uint16_t length_words)
+/// write using the sd
+bool flash_write_words_sd(const void *value, uint16_t length_words)
 {
   fds_record_t record;
   fds_record_desc_t record_desc;
@@ -147,6 +154,11 @@ bool flash_write_words(const void *value, uint16_t length_words)
   return write_done;
 }
 
+
+bool flash_write_words(const void *value, uint16_t length_words)
+{
+  return flash_write_words_sd(value, length_words);
+}
 
 /**
  * @brief Init eeprom emulation system

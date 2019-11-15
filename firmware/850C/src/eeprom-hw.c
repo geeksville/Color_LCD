@@ -27,6 +27,8 @@ static uint8_t eeprom_read(uint32_t ui32_address);
 static uint8_t eeprom_read_from_page(uint32_t ui32_address, uint32_t ui32_eeprom_page);
 // static uint32_t eeprom_write_to_page(uint32_t ui32_address, uint8_t ui8_data, uint32_t ui32_eeprom_page);
 
+static uint32_t eeprom_write(uint32_t ui32_address, uint8_t ui8_data);
+
 void eeprom_hw_init() {
 	// Nothing needed on 850C
 }
@@ -133,7 +135,7 @@ uint8_t eeprom_read_from_page(uint32_t ui32_address, uint32_t ui32_eeprom_page)
   return (uint8_t) (*ui16_p_address);
 }
 
-uint32_t eeprom_write(uint32_t ui32_address, uint8_t ui8_data)
+static uint32_t eeprom_write(uint32_t ui32_address, uint8_t ui8_data)
 {
   ui32_address = ((uint32_t) EEPROM_START_ADDRESS) + (ui32_m_eeprom_page * 2048) + (ui32_address * 2);
 
