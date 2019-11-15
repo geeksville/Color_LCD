@@ -142,6 +142,109 @@ uint32_t stack_overflow_debug(void)
     return offset;
 }
 
+static inline void bootloader_util_reset(uint32_t start_addr)
+{
+    __asm volatile(
+        "ldr   r0, [%0]\t\n"            // Get App initial MSP for bootloader.
+        "msr   msp, r0\t\n"             // Set the main stack pointer to the applications MSP.
+        "ldr   r0, [%0, #0x04]\t\n"     // Load Reset handler into R0.
+
+        "movs  r4, #0xFF\t\n"           // Move ones to R4.
+        "sxtb  r4, r4\t\n"              // Sign extend R4 to obtain 0xFFFFFFFF instead of 0xFF.
+
+        "mrs   r5, IPSR\t\n"            // Load IPSR to R5 to check for handler or thread mode.
+        "cmp   r5, #0x00\t\n"           // Compare, if 0 then we are in thread mode and can continue to reset handler of bootloader.
+        "bne   isr_abort\t\n"           // If not zero we need to exit current ISR and jump to reset handler of bootloader.
+
+        "mov   lr, r4\t\n"              // Clear the link register and set to ones to ensure no return.
+        "bx    r0\t\n"                  // Branch to reset handler of bootloader.
+
+        "isr_abort:  \t\n"
+
+        "mov   r5, r4\t\n"              // Fill with ones before jumping to reset handling. Will be popped as LR when exiting ISR. Ensures no return to application.
+        "mov   r6, r0\t\n"              // Move address of reset handler to R6. Will be popped as PC when exiting ISR. Ensures the reset handler will be executed when exist ISR.
+        "movs  r7, #0x21\t\n"           // Move MSB reset value of xPSR to R7. Will be popped as xPSR when exiting ISR. xPSR is 0x21000000 thus MSB is 0x21.
+        "rev   r7, r7\t\n"              // Reverse byte order to put 0x21 as MSB.
+        "push  {r4-r7}\t\n"             // Push everything to new stack to allow interrupt handler to fetch it on exiting the ISR.
+
+        "movs  r4, #0x00\t\n"           // Fill with zeros before jumping to reset handling. We be popped as R0 when exiting ISR (Cleaning up of the registers).
+        "movs  r5, #0x00\t\n"           // Fill with zeros before jumping to reset handling. We be popped as R1 when exiting ISR (Cleaning up of the registers).
+        "movs  r6, #0x00\t\n"           // Fill with zeros before jumping to reset handling. We be popped as R2 when exiting ISR (Cleaning up of the registers).
+        "movs  r7, #0x00\t\n"           // Fill with zeros before jumping to reset handling. We be popped as R3 when exiting ISR (Cleaning up of the registers).
+        "push  {r4-r7}\t\n"             // Push zeros (R4-R7) to stack to prepare for exiting the interrupt routine.
+
+        "movs  r0, #0xF9\t\n"           // Move the execution return command into register, 0xFFFFFFF9.
+        "sxtb  r0, r0\t\n"              // Sign extend R0 to obtain 0xFFFFFFF9 instead of 0xF9.
+        "bx    r0\t\n"                  // No return - Handler mode will be exited. Stack will be popped and execution will continue in reset handler initializing other application.
+        ".align\t\n"
+        :: "r" (start_addr)             // Argument list for the gcc assembly. start_addr is %0.
+        :  "r0", "r4", "r5", "r6", "r7" // List of register maintained manually.
+    );
+}
+
+void bootloader_util_app_start(uint32_t start_addr)
+{
+    bootloader_util_reset(start_addr);
+}
+
+#include "nrf_sdm.h"
+
+#define IRQ_ENABLED            0x01                                     /**< Field that identifies if an interrupt is enabled. */
+#define MAX_NUMBER_INTERRUPTS  32                                       /**< Maximum number of interrupts available. */
+
+/**@brief Function for disabling all interrupts before jumping from bootloader to application.
+ */
+static void interrupts_disable(void)
+{
+    uint32_t interrupt_setting_mask;
+    uint32_t irq;
+
+    // Fetch the current interrupt settings.
+    interrupt_setting_mask = NVIC->ISER[0];
+
+    // Loop from interrupt 0 for disabling of all interrupts.
+    for (irq = 0; irq < MAX_NUMBER_INTERRUPTS; irq++)
+    {
+        if (interrupt_setting_mask & (IRQ_ENABLED << irq))
+        {
+            // The interrupt was enabled, hence disable it.
+            NVIC_DisableIRQ((IRQn_Type)irq);
+        }
+    }
+}
+
+/**
+ * A low level trick to enter the bootloader.  Usable with SD110, I'm not sure if it is
+ * the preferred method for later releases.
+ *
+ * per https://devzone.nordicsemi.com/f/nordic-q-a/12606/jumping-to-bootloader-from-the-application/47855#47855
+ */
+void enter_bootloader() {
+  // Note: this old bootloader is at 0x3b000
+  int BOOTLOADER_DFU_START = 0xB1;
+
+#if 0
+  NRF_POWER->GPREGRET = BOOTLOADER_DFU_START;
+  NVIC_SystemReset();
+#else
+  NRF_POWER->GPREGRET = BOOTLOADER_DFU_START;
+  //uint32_t err_code = sd_power_gpregret_set(BOOTLOADER_DFU_START);
+  //APP_ERROR_CHECK(err_code);
+
+  //err_code = sd_softdevice_disable();
+  //APP_ERROR_CHECK(err_code);
+
+  uint32_t err_code = sd_softdevice_vector_table_base_set(NRF_UICR->BOOTLOADERADDR);
+  APP_ERROR_CHECK(err_code);
+
+  // dfu_app_peer_data_set(conn_handle);
+
+  NVIC_ClearPendingIRQ(SWI2_IRQn);
+  interrupts_disable();
+  bootloader_util_app_start(NRF_UICR->BOOTLOADERADDR);
+#endif
+}
+
 /**
  * Check if we should use the softdevice.
  */
@@ -198,6 +301,14 @@ int main(void)
   system_power(true);
 
   screenShow(&bootScreen);
+
+  if(noSolderHack && buttons_get_m_state()) {
+    // If M key is pressed during power on and we are on an old soft device, branch into the SD
+    // to ask it to do a software update.
+    fieldPrintf(&bootStatus, "Updating?");
+    screenUpdate();
+    enter_bootloader();
+  }
 
   // After we show the bootscreen...
   // If a button is currently pressed (likely unless developing), wait for the release (so future click events are not confused
