@@ -647,6 +647,10 @@ void main_idle() {
 	if (++ui8_100ms_timer_counter >= 5) {
 		ui8_100ms_timer_counter = 0;
 		automatic_power_off_management(); // Note: this was moved from layer_2() because it does eeprom operations which should not be used from ISR
+
+	  send_tx_package(); // This can not be called from an ISR (i.e. don't put it in the timer handler) on a SW102
+	  // I haven't checked the 850C implementation of UART send but I kinda expect it has a spin loop also so not safe to
+	  // call from an ISR their either.
 	}
 }
 

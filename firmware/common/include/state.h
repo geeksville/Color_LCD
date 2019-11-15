@@ -196,6 +196,7 @@ extern volatile l2_vars_t l2_vars; // FIXME - this shouldn't be exposed outside 
 extern l3_vars_t l3_vars;
 
 void realtime_processing(void);
+void send_tx_package(void);
 
 /**
  * Called from the main thread every 100ms
