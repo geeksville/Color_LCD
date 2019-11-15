@@ -326,6 +326,7 @@ generate_dfu_package: $(OUTPUT_DIRECTORY)/nrf51822_sw102.hex
 generate_nosolder: $(OUTPUT_DIRECTORY)/nrf51822_sw102.hex
 	mkdir -p $(RELEASE_DIRECTORY)
 	/usr/local/bin/nrfutil dfu genpkg --application ./$(OUTPUT_DIRECTORY)/nrf51822_sw102.hex --sd-req 100 $(RELEASE_DIRECTORY)/sw102-nosolder-$(VERSION_STRING).zip
+
 	# /usr/local/bin/nrfutil dfu genpkg --bootloader ../SW102_LCD_Bluetooth-bootloader/_build/sw102_bootloader.hex --sd-req 100 --softdevice $(SDK_ROOT)/components/softdevice/s130/hex/s130_nrf51_2.0.1_softdevice.hex $(RELEASE_DIRECTORY)/sw102-firsttime-$(VERSION_STRING).zip
 
 # Generate a prebuilt bin file with bootloader apploand and valid app crc
