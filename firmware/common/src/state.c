@@ -617,6 +617,10 @@ void l2_calc_battery_soc_watts_hour(void) {
 void realtime_processing(void) {
 	process_rx();
 
+#ifndef SW102
+	send_tx_package(); // we can't call this in ISR context on SW102 because it uses a semaphore, call from main thread instead
+#endif
+
 	/************************************************************************************************/
 	// now do all the calculations that must be done every 100ms
 	l2_low_pass_filter_battery_voltage_current_power();

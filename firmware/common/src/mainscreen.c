@@ -169,13 +169,6 @@ Field bootStatus = FIELD_DRAWTEXT(.msg = "Booting...");
 
 #define MIN_VOLTAGE_10X 140 // If our measured bat voltage (using ADC in the display) is lower than this, we assume we are running on a developers desk
 
-/*
-todo
-fix sendtx on 850
-enter bootloader on press
-use new flash write code
-*/
-
 static void bootScreenOnPreUpdate() {
 	uint16_t bvolt = battery_voltage_10x_get();
 
@@ -647,12 +640,12 @@ void main_idle() {
 	handle_buttons();
 	screen_clock(); // This is _after_ handle_buttons so if a button was pressed this tick, we immediately update the GUI
 
-	if (gui_ticks % (100 / MSEC_PER_TICK) == 0) {
+	if (gui_ticks % (100 / MSEC_PER_TICK) == 0) { // every 100ms
 		automatic_power_off_management(); // Note: this was moved from layer_2() because it does eeprom operations which should not be used from ISR
 
+#ifdef SW102
 	  send_tx_package(); // This can not be called from an ISR (i.e. don't put it in the timer handler) on a SW102
-	  // I haven't checked the 850C implementation of UART send but I kinda expect it has a spin loop also so not safe to
-	  // call from an ISR their either.
+#endif
 	}
 }
 
