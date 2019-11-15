@@ -17,7 +17,7 @@
 
 // volatile fs_ret_t last_fs_ret;
 
-/** Note: on SD110 bootloader starts at 0x3C000, but we want this hack to work on
+/** Note: on SD110 bootloader starts at 0x3B000, but we want this hack to work on
  * SD130 (during development) also.  So we use the lower address for that bootloader
  *
  */

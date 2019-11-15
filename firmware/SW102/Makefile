@@ -8,7 +8,8 @@ RELEASE_DIRECTORY := _release
 SDK_ROOT := ./nRF5_SDK_12.3.0
 PROJ_DIR := .
 
-NOSOLDER = true
+# FIXME delete
+NOSOLDER=true
 
 ifdef NOSOLDER
 SOFTDEVICE_VERSION := 110
@@ -282,6 +283,13 @@ help:
 	@echo following targets are available:
 	@echo 	nrf51822_sw102
 
+# make a full release with all of our build products
+release:
+	echo generating the special NOSOLDER OTA package
+	make NOSOLDER=true clean generate_nosolder
+	echo generating the regular packages
+	make clean release_build
+	
 TEMPLATE_PATH := $(SDK_ROOT)/components/toolchain/gcc
 
 include $(TEMPLATE_PATH)/Makefile.common
