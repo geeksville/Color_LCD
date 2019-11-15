@@ -17,6 +17,105 @@
 
 // volatile fs_ret_t last_fs_ret;
 
+/** Note: on SD110 bootloader starts at 0x3C000, but we want this hack to work on
+ * SD130 (during development) also.  So we use the lower address for that bootloader
+ *
+ */
+#define BOOTLOADER_START 0x3AC00
+#define DATAFLASH_SIZE   4096
+#define DATAFLASH_START  (BOOTLOADER_START - DATAFLASH_SIZE)
+#define DATAFLASH_MAGIC  0x04954403
+
+/** @brief Function for erasing a page in flash. (from flashwrite example in SDK9)
+ *
+ * @param page_address Address of the first word in the page to be erased.
+ */
+static void flash_page_erase(uint32_t * page_address)
+{
+    // Turn on flash erase enable and wait until the NVMC is ready:
+    NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos);
+
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+        // Do nothing.
+    }
+
+    // Erase page:
+    NRF_NVMC->ERASEPAGE = (uint32_t)page_address;
+
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+        // Do nothing.
+    }
+
+    // Turn off flash erase enable and wait until the NVMC is ready:
+    NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
+
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+        // Do nothing.
+    }
+}
+
+/** @brief Function for filling a page in flash with a value.
+ *
+ * @param[in] address Address of the first word in the page to be filled.
+ * @param[in] value Value to be written to flash.
+ */
+static void flash_word_write(uint32_t * address, uint32_t value)
+{
+    // Turn on flash write enable and wait until the NVMC is ready:
+    NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
+
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+        // Do nothing.
+    }
+
+    *address = value;
+
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+        // Do nothing.
+    }
+
+    // Turn off flash write enable and wait until the NVMC is ready:
+    NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
+
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+        // Do nothing.
+    }
+}
+
+static bool flash_write_words_raw(const void *value, uint16_t length_words)
+{
+  // FIXME, someday do flippy flop between two pages, but this write is only one page so
+  // the chance of power loss during this super quick write is low.
+
+  uint32_t *flash = (uint32_t *) DATAFLASH_START;
+  flash_page_erase(flash);
+
+  const uint32_t *src = value;
+  for(int i = 0; i < length_words; i++)
+    flash_word_write(&flash[i+1], src[i]);
+  flash_word_write(flash, DATAFLASH_MAGIC);
+  return true;
+}
+
+static bool flash_read_words_raw(void *dest, uint16_t length_words)
+{
+  uint32_t *flash = (uint32_t *) DATAFLASH_START;
+
+  if(flash[0] != DATAFLASH_MAGIC)
+    return false; // must be blank
+
+  assert(length_words * sizeof(uint32_t) + 4 <= DATAFLASH_SIZE);
+  memcpy(dest, &flash[1], length_words * sizeof(uint32_t));
+
+  return true;
+}
+
 /* Event handler */
 
 volatile static bool gc_done, init_done, write_done;
@@ -86,7 +185,9 @@ static bool flash_read_words_sd(void *dest, uint16_t length_words)
 
 bool flash_read_words(void *dest, uint16_t length_words)
 {
-  return flash_read_words_sd(dest, length_words);
+  return useSoftDevice ?
+    flash_read_words_sd(dest, length_words) :
+    flash_read_words_raw(dest, length_words);
 }
 
 static bool wait_gc()
@@ -107,7 +208,7 @@ static bool wait_gc()
 
 
 /// write using the sd
-bool flash_write_words_sd(const void *value, uint16_t length_words)
+static bool flash_write_words_sd(const void *value, uint16_t length_words)
 {
   fds_record_t record;
   fds_record_desc_t record_desc;
@@ -155,9 +256,12 @@ bool flash_write_words_sd(const void *value, uint16_t length_words)
 }
 
 
+
 bool flash_write_words(const void *value, uint16_t length_words)
 {
-  return flash_write_words_sd(value, length_words);
+  return useSoftDevice ?
+    flash_write_words_sd(value, length_words) :
+    flash_write_words_raw(value, length_words);
 }
 
 /**
