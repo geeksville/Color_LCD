@@ -302,12 +302,8 @@ void eeprom_write_variables(void) {
 
 void eeprom_init_defaults(void)
 {
-  // FIXME: SW102 implementation!
-#ifndef SW102
-  // first force KEY value to 0
-  eeprom_write(ADDRESS_KEY, 0);
-
-  // eeprom_init() will read the default values now
-  eeprom_init();
-#endif
+  memcpy(&m_eeprom_data, &m_eeprom_data_defaults,
+          sizeof(m_eeprom_data_defaults));
+  eeprom_init_variables();
+  eeprom_write_variables();
 }

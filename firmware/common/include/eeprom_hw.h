@@ -7,7 +7,10 @@
 #define KEY 7
 
 void eeprom_hw_init(void);
-uint32_t eeprom_write(uint32_t ui32_address, uint8_t ui8_data);
+
+// @casainho, this routine doesn't need to be public anymore - because it is private to the 850c
+// HAL provided by eeprom-hw.c
+// uint32_t eeprom_write(uint32_t ui32_address, uint8_t ui8_data);
 
 bool flash_write_words(const void *value, uint16_t length_words);
 
