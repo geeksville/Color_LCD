@@ -6,7 +6,7 @@ void main_idle(); // call every 20ms
 bool mainscreen_onpress(buttons_events_t events);
 void showNextScreen();
 
-extern Screen mainScreen, infoScreen, bootScreen;
+extern Screen mainScreen, infoScreen;
 extern Field bootStatus;
 
 extern Screen *screens[];
@@ -52,3 +52,5 @@ extern bool wd_failure_detected;
 
 extern uint8_t ui8_g_configuration_clock_hours;
 extern uint8_t ui8_g_configuration_clock_minutes;
+
+void showBootScreen();

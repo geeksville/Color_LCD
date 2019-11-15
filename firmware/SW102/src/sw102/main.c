@@ -313,14 +313,7 @@ int main(void)
   eeprom_init();
   system_power(true);
 
-  screenShow(&bootScreen);
-
-  if(noSolderHack && buttons_get_down_state()) {
-    // If M key is pressed during power on and we are on an old soft device, branch into the SD
-    // to ask it to do a software update.
-    screenShow(&updateScreen);
-    enter_bootloader();
-  }
+  showBootScreen(1500); // On the SW102 we always want to show the bootscreen because a) needed to enter bootloader and b) kevin likes it ;-)    extern bool noSolderHack;
 
   // After we show the bootscreen...
   // If a button is currently pressed (likely unless developing), wait for the release (so future click events are not confused

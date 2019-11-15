@@ -169,6 +169,8 @@ Field bootStatus = FIELD_DRAWTEXT(.msg = "Booting...");
 
 #define MIN_VOLTAGE_10X 140 // If our measured bat voltage (using ADC in the display) is lower than this, we assume we are running on a developers desk
 
+static uint32_t bootscreenEndTick;
+
 static void bootScreenOnPreUpdate() {
 	uint16_t bvolt = battery_voltage_10x_get();
 
@@ -180,12 +182,29 @@ static void bootScreenOnPreUpdate() {
   else
     fieldPrintf(&bootStatus, _S("Waiting TSDZ2 - (%u.%uV)", "Waiting (%u.%uV)"), bvolt / 10, bvolt % 10);
 
+#ifdef SW102
+  // FIXME, kinda yucky to do this check here, move it into main.c somehow.
+  // the rev9 bootloader apparently doesn't allow appload to start until all buttons are released,
+  // so we check for the user pressing the M key after the bootscreen is up.
+  extern bool noSolderHack;
+  if(noSolderHack && buttons_get_m_state()) {
+    // If M key is pressed during power on and we are on an old soft device, branch into the SD
+    // to ask it to do a software update.
+    extern Screen updateScreen;
+    extern void enter_bootloader();
+
+    screenShow(&updateScreen);
+    enter_bootloader();
+  }
+#endif
+
   // Stop showing only after we release on/off button and we are commutication with motor
-  if(!buttons_get_onoff_state() && (has_seen_motor || is_sim_motor))
+  bool canEnd = bootscreenEndTick <= gui_ticks;
+  if(canEnd && !buttons_get_onoff_state() && (has_seen_motor || is_sim_motor))
     showNextScreen();
 }
 
-Screen bootScreen = {
+static Screen bootScreen = {
   .onPreUpdate = bootScreenOnPreUpdate,
 
   .fields = {
@@ -228,6 +247,15 @@ Screen bootScreen = {
     }
   }
 };
+
+/**
+ * Show the boot screen
+ */
+void showBootScreen(uint32_t timeoutMs) {
+  bootscreenEndTick = gui_ticks + timeoutMs / MSEC_PER_TICK;
+  screenShow(&bootScreen);
+}
+
 
 // Allow common operations (like walk assist and headlights) button presses to work on any page
 bool anyscreen_onpress(buttons_events_t events) {
