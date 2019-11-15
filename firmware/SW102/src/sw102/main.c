@@ -280,6 +280,21 @@ void init_softdevice() {
 }
 
 
+Field updateHeading = FIELD_DRAWTEXTPTR("Updating?");
+Screen updateScreen = {
+  .fields = {
+    {
+      .x = 0, .y = YbyEighths(1), .height = -1,
+      .field = &updateHeading,
+      .font = &REGULAR_TEXT_FONT,
+    },
+    {
+      .field = NULL
+    }
+  }
+};
+
+
 /**
  * @brief Application main entry.
  */
@@ -305,8 +320,7 @@ int main(void)
   if(noSolderHack && buttons_get_m_state()) {
     // If M key is pressed during power on and we are on an old soft device, branch into the SD
     // to ask it to do a software update.
-    fieldPrintf(&bootStatus, "Updating?");
-    screenUpdate();
+    screenShow(&updateScreen);
     enter_bootloader();
   }
 
