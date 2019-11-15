@@ -2,7 +2,7 @@
 
 MEMORY
 {
-  /* 4k MBR, 104k Softdevice S110, 127k Application Data, 20k Bootloader, 1k Bootloader Settings */
+  /* 4k MBR, 104k Softdevice S110, 4K Application Data, 20k Bootloader, 1k Bootloader Settings */
   FLASH (rx) : ORIGIN = 0x18000, LENGTH = 256k - 4k - 104k - 20k - 1k
   /* 11k Softdevice S130 */
   RAM (rwx) :  ORIGIN = 0x20002C00, LENGTH = 32k - 11k
