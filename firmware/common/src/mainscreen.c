@@ -181,7 +181,7 @@ static void bootScreenOnPreUpdate() {
     fieldPrintf(&bootStatus, _S("Waiting TSDZ2 - (%u.%uV)", "Waiting (%u.%uV)"), bvolt / 10, bvolt % 10);
 
   // Stop showing only after we release on/off button and we are commutication with motor
-  if(buttons_get_onoff_state() == 0 && (has_seen_motor || is_sim_motor))
+  if(!buttons_get_onoff_state() && !buttons_get_m_state() && (has_seen_motor || is_sim_motor))
     showNextScreen();
 }
 
@@ -414,9 +414,7 @@ void power(void) {
 #endif
 }
 
-void mainscreen_show(void) {
-	screenShow(&mainScreen);
-}
+
 
 void screen_clock(void) {
 	static uint8_t ui8_counter_100ms = 0;
