@@ -44,7 +44,6 @@ Button buttonM, buttonDWN, buttonUP, buttonPWR;
 
 APP_TIMER_DEF(gui_timer_id); /* GUI updates counting timer. */
 #define GUI_INTERVAL APP_TIMER_TICKS(MSEC_PER_TICK, APP_TIMER_PRESCALER)
-volatile uint32_t gui_ticks; // how many ticks since boot (will eventually wrap)
 
 // assume we should until we init_softdevice()
 bool useSoftDevice = true;

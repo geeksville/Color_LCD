@@ -57,7 +57,7 @@ int main(void)
   timer4_init();
   screen_init();
 
-  screenShow(&bootScreen);
+  showBootScreen(500); // @casainho change to 0 if you prefer how that looks
 
   while(1)
   {
@@ -67,6 +67,7 @@ int main(void)
     if((ui32_timer_base_counter_1ms - ui32_ms_loop_counter_1) > 20) // every 20ms
     {
       ui32_ms_loop_counter_1 = ui32_timer_base_counter_1ms;
+      gui_ticks++;
 
       // next 2 lines takes about 11ms to execute (main menu). Measured on 2019.03.04.
       main_idle();

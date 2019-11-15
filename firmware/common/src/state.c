@@ -28,6 +28,8 @@ volatile uint8_t motorVariablesStabilized = 0;
 bool has_seen_motor; // true once we've received a packet from a real motor
 bool is_sim_motor; // true if we are simulating a motor (and therefore not talking on serial at all)
 
+volatile uint32_t gui_ticks; // volatile because on some platforms might be set by ISR
+
 // kevinh: I don't think volatile is probably needed here
 volatile l2_vars_t l2_vars;
 
