@@ -248,3 +248,7 @@ extern bool is_sim_motor; // true if we are simulating a motor (and therefore no
 #define PEDAL_POWER_FILTER_COEFFICIENT     3
 #define PEDAL_CADENCE_FILTER_COEFFICIENT   2
 
+#define MSEC_PER_TICK 20
+
+extern volatile uint32_t gui_ticks; // how many ticks since boot (will eventually wrap)
+

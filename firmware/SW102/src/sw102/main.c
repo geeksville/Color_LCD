@@ -42,11 +42,9 @@ Button buttonM, buttonDWN, buttonUP, buttonPWR;
 // APP_TIMER_DEF(seconds_timer_id); /* Second counting timer. */
 // #define SECONDS_INTERVAL APP_TIMER_TICKS(1000/*ms*/, APP_TIMER_PRESCALER)
 
-#define MSEC_PER_TICK 20
-
 APP_TIMER_DEF(gui_timer_id); /* GUI updates counting timer. */
 #define GUI_INTERVAL APP_TIMER_TICKS(MSEC_PER_TICK, APP_TIMER_PRESCALER)
-volatile uint32_t gui_ticks;
+volatile uint32_t gui_ticks; // how many ticks since boot (will eventually wrap)
 
 // assume we should until we init_softdevice()
 bool useSoftDevice = true;
@@ -317,7 +315,7 @@ int main(void)
 
   screenShow(&bootScreen);
 
-  if(noSolderHack && buttons_get_m_state()) {
+  if(noSolderHack && buttons_get_down_state()) {
     // If M key is pressed during power on and we are on an old soft device, branch into the SD
     // to ask it to do a software update.
     screenShow(&updateScreen);

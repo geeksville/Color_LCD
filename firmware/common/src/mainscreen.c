@@ -169,6 +169,13 @@ Field bootStatus = FIELD_DRAWTEXT(.msg = "Booting...");
 
 #define MIN_VOLTAGE_10X 140 // If our measured bat voltage (using ADC in the display) is lower than this, we assume we are running on a developers desk
 
+/*
+todo
+fix sendtx on 850
+enter bootloader on press
+use new flash write code
+*/
+
 static void bootScreenOnPreUpdate() {
 	uint16_t bvolt = battery_voltage_10x_get();
 
@@ -181,7 +188,7 @@ static void bootScreenOnPreUpdate() {
     fieldPrintf(&bootStatus, _S("Waiting TSDZ2 - (%u.%uV)", "Waiting (%u.%uV)"), bvolt / 10, bvolt % 10);
 
   // Stop showing only after we release on/off button and we are commutication with motor
-  if(!buttons_get_onoff_state() && !buttons_get_m_state() && (has_seen_motor || is_sim_motor))
+  if(!buttons_get_onoff_state() && (has_seen_motor || is_sim_motor))
     showNextScreen();
 }
 
@@ -637,13 +644,10 @@ static void handle_buttons() {
 
 /// Call every 20ms from the main thread.
 void main_idle() {
-	static uint8_t ui8_100ms_timer_counter = 0;
-	
 	handle_buttons();
 	screen_clock(); // This is _after_ handle_buttons so if a button was pressed this tick, we immediately update the GUI
 
-	if (++ui8_100ms_timer_counter >= 5) {
-		ui8_100ms_timer_counter = 0;
+	if (gui_ticks % (100 / MSEC_PER_TICK) == 0) {
 		automatic_power_off_management(); // Note: this was moved from layer_2() because it does eeprom operations which should not be used from ISR
 
 	  send_tx_package(); // This can not be called from an ISR (i.e. don't put it in the timer handler) on a SW102
