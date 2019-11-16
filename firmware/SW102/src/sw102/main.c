@@ -26,6 +26,12 @@
 #include "rtc.h"
 #include "nrf_drv_wdt.h"
 #include "nrf_power.h"
+#include "assert.h"
+
+// includes for the NOSOLDER hack
+#include "nrf_mbr.h"
+#include "ble.h"
+#include "nrf_sdm.h"
 
 /* Variable definition */
 
@@ -210,6 +216,30 @@ static void interrupts_disable(void)
     }
 }
 
+/*
+#define SD_MBR_COMMAND_INIT_SD 2
+#define MBR_SVC_BASE        (0x18)
+
+SVCALL(MBR_SVC_BASE, uint32_t, sd_mbr_command(sd_mbr_command_t* param));
+*/
+
+#define NRF_CLOCK_LFCLKSRC_XTAL_50_PPM 6 // nrf_sdm.h
+#define NRF_CLOCK_LFCLKSRC_RC_250_PPM_TEMP_4000MS_CALIBRATION 17
+#define SD_SOFTDEVICE_ENABLE_S110 0x10
+
+typedef void (*softdevice_assertion_handler_t)(uint32_t pc, uint16_t line_number, const uint8_t * p_file_name);
+
+SVCALL(SD_SOFTDEVICE_ENABLE_S110, uint32_t, sd_softdevice_enable_s110(uint32_t clock_source, softdevice_assertion_handler_t assertion_handler));
+SVCALL(SD_BLE_ENABLE, uint32_t, sd_ble_enable_s110(ble_enable_params_t * p_ble_enable_params));
+
+#define IS_SRVC_CHANGED_CHARACT_PRESENT  1
+
+/**@brief Assert callback handler for SoftDevice asserts. */
+void softdevice_assert_callback(uint32_t pc, uint16_t line_num, const uint8_t *file_name)
+{
+    while (1);
+}
+
 /**
  * A low level trick to enter the bootloader.  Usable with SD110, I'm not sure if it is
  * the preferred method for later releases.
@@ -224,17 +254,39 @@ void enter_bootloader() {
   NRF_POWER->GPREGRET = BOOTLOADER_DFU_START;
   NVIC_SystemReset();
 #else
-  NRF_POWER->GPREGRET = BOOTLOADER_DFU_START;
-  //uint32_t err_code = sd_power_gpregret_set(BOOTLOADER_DFU_START);
-  //APP_ERROR_CHECK(err_code);
 
   //err_code = sd_softdevice_disable();
   //APP_ERROR_CHECK(err_code);
 
-  uint32_t err_code = sd_softdevice_vector_table_base_set(NRF_UICR->BOOTLOADERADDR);
+  // init the soft device the same way the sdk9 bootloader does it (so bluetooth will work in bootloader)
+  /* sd_mbr_command_t com = {SD_MBR_COMMAND_INIT_SD, };
+  err_code = sd_mbr_command(&com);
+  APP_ERROR_CHECK(err_code); */
+
+  // Enable soft device
+  uint32_t err_code = sd_softdevice_enable_s110(NRF_CLOCK_LFCLKSRC_RC_250_PPM_TEMP_4000MS_CALIBRATION, softdevice_assert_callback);
+  APP_ERROR_CHECK(err_code);
+
+  // NRF_POWER->GPREGRET = BOOTLOADER_DFU_START;
+  err_code = sd_power_gpregret_set(BOOTLOADER_DFU_START);
+  APP_ERROR_CHECK(err_code);
+
+  // Enable BLE
+  ble_enable_params_t ble_enable_params =
+  {
+      .gatts_enable_params =
+      {
+          .service_changed = IS_SRVC_CHANGED_CHARACT_PRESENT,
+          .attr_tab_size   = BLE_GATTS_ATTR_TAB_SIZE_DEFAULT
+      }
+  };
+  err_code = sd_ble_enable_s110(&ble_enable_params);
   APP_ERROR_CHECK(err_code);
 
   // dfu_app_peer_data_set(conn_handle);
+
+  err_code = sd_softdevice_vector_table_base_set(NRF_UICR->BOOTLOADERADDR);
+  APP_ERROR_CHECK(err_code);
 
   NVIC_ClearPendingIRQ(SWI2_IRQn);
   interrupts_disable();
@@ -313,6 +365,8 @@ int main(void)
   system_power(true);
 
   showBootScreen(1500); // On the SW102 we always want to show the bootscreen because a) needed to enter bootloader and b) kevin likes it ;-)    extern bool noSolderHack;
+
+  enter_bootloader();
 
   // After we show the bootscreen...
   // If a button is currently pressed (likely unless developing), wait for the release (so future click events are not confused

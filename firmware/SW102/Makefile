@@ -9,7 +9,7 @@ SDK_ROOT := ./nRF5_SDK_12.3.0
 PROJ_DIR := .
 
 # Note: instead just use "make release"
-# NOSOLDER=true
+NOSOLDER=true
 
 ifdef NOSOLDER
 SOFTDEVICE_VERSION := 110
