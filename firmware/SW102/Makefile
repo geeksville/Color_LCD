@@ -8,8 +8,8 @@ RELEASE_DIRECTORY := _release
 SDK_ROOT := ./nRF5_SDK_12.3.0
 PROJ_DIR := .
 
-# FIXME delete
-NOSOLDER=true
+# Note: instead just use "make release"
+# NOSOLDER=true
 
 ifdef NOSOLDER
 SOFTDEVICE_VERSION := 110
@@ -225,6 +225,10 @@ OPT = -Os -g3
 # Optimization flags debug (important to get line numbers for faults - warning this adds about 40KB to flash size!)
 # OPT = -O0 -g3 -DDEBUG_NRF -DDEBUG
 
+ifdef NOSOLDER
+CFLAGS += -DNOSOLDER
+endif
+
 # C flags common to all targets
 CFLAGS += $(OPT)
 CFLAGS += -DBOARD_CUSTOM -DSW102
@@ -255,7 +259,7 @@ ASMFLAGS += -DNRF51
 ASMFLAGS += -DNRF_DFU_SETTINGS_VERSION=1
 ASMFLAGS += -DS$(SOFTDEVICE_VERSION)
 ASMFLAGS += -DBLE_STACK_SUPPORT_REQD
-ASMFLAGS += -DSWI_DISABLE0
+ASMFLAGS += -DSWI_DISABLE0 
 ASMFLAGS += -DNRF51822
 ASMFLAGS += -DNRF_SD_BLE_API_VERSION=2
 

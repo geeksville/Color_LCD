@@ -116,6 +116,7 @@ static bool flash_read_words_raw(void *dest, uint16_t length_words)
   return true;
 }
 
+
 /* Event handler */
 
 volatile static bool gc_done, init_done, write_done;
@@ -151,11 +152,12 @@ static void fds_evt_handler(fds_evt_t const *const evt)
 // returns true if our preferences were found
 static bool flash_read_words_sd(void *dest, uint16_t length_words)
 {
+  bool did_read = false;
+
+#ifndef NOSOLDER
   fds_flash_record_t flash_record;
   fds_record_desc_t record_desc;
   fds_find_token_t ftok;
-
-  bool did_read = false;
 
   memset(&record_desc, 0x00, sizeof(record_desc));
   memset(&ftok, 0x00, sizeof(ftok));
@@ -179,6 +181,7 @@ static bool flash_read_words_sd(void *dest, uint16_t length_words)
       APP_ERROR_CHECK(fds_record_delete(&record_desc));
     }
   }
+#endif
 
   return did_read;
 }
@@ -195,12 +198,15 @@ static bool wait_gc()
   if(!useSoftDevice)
     return true; // assume success
 
+#ifndef NOSOLDER
   gc_done = false;
   fds_gc();
   for (volatile int count = 0; count < 1000 && !gc_done; count++) {
     sd_app_evt_wait();
     nrf_delay_ms(1);
   }
+#endif
+
   // Note: this can fail if the soft device is not enabled (normally performed in ble init)
   // assert(gc_done);
   return gc_done;
@@ -210,6 +216,7 @@ static bool wait_gc()
 /// write using the sd
 static bool flash_write_words_sd(const void *value, uint16_t length_words)
 {
+#ifndef NOSOLDER
   fds_record_t record;
   fds_record_desc_t record_desc;
   fds_record_chunk_t record_chunk;
@@ -251,11 +258,10 @@ static bool flash_write_words_sd(const void *value, uint16_t length_words)
     sd_app_evt_wait();
     nrf_delay_ms(1);
   }
+#endif
 
   return write_done;
 }
-
-
 
 bool flash_write_words(const void *value, uint16_t length_words)
 {

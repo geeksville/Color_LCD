@@ -20,6 +20,8 @@
 #include "fds.h"
 #include "state.h"
 
+#ifndef NOSOLDER
+
 // define to enable the (not yet used) serial service
 // #define BLE_SERIAL
 // define to able reporting speed and cadence via bluetooth
@@ -779,12 +781,16 @@ static void peer_init() {
   APP_ERROR_CHECK(err_code);
 }
 
+#endif
+
 void ble_init(void)
 {
+#ifndef NOSOLDER
   ble_stack_init();
   gap_params_init();
   services_init();
   advertising_init();
   conn_params_init();
   peer_init();
+#endif
 }
